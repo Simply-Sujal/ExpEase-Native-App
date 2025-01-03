@@ -1,16 +1,28 @@
 import React, { useContext, useEffect } from "react";
-import { FlatList, Image, Text, View, Dimensions, StyleSheet, useColorScheme } from "react-native";
+import {
+    FlatList,
+    Image,
+    Text,
+    View,
+    Dimensions,
+    StyleSheet,
+    useColorScheme,
+    Pressable,
+} from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemeContext } from "@/context/ThemeContext";
-import { companies } from "@/data/companies"
-import { images } from "@/data/carouselImages"
-import { TextInput } from "react-native-gesture-handler";
+import { companies } from "@/data/companies";
+import { images } from "@/data/carouselImages";
+import { ScrollView } from "react-native";
+import ListOfExperiences from "@/components/ListOfExperinces";
+import { useRouter } from "expo-router";
 
 export default function Information() {
     const { theme, setColorScheme, colorScheme } = useContext(ThemeContext);
     const systemColorScheme = useColorScheme();
     const width = Dimensions.get("window").width;
+    const router = useRouter();
 
     useEffect(() => {
         if (systemColorScheme !== colorScheme) {
@@ -18,59 +30,90 @@ export default function Information() {
         }
     }, [systemColorScheme]);
 
+    const handleCompanySelect = (companyName) => {
+        router.push({
+            pathname: "/filteredExperiences",
+            params: { companyName }, // Pass the company name as a parameter
+        });
+    };
 
     const styles = createStyles(theme, colorScheme);
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.innerContainer}>
-                <Text style={styles.appName}>ExpEase</Text>
-                <View style={styles.headerContainer}>
-                    <Text style={styles.greetingText}>Hi Folks 👋</Text>
-                    <Image
-                        source={require("@/assets/images/studenticon.png")}
-                        style={styles.profileImage}
-                    />
-                </View>
-            </View>
-
-            <Carousel
-                loop
-                width={width}
-                // height={width / 2}
-                autoPlay={true}
-                data={images}
-                scrollAnimationDuration={3000}
-                renderItem={({ index }) => (
-                    <View style={styles.carouselContainer}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+                <View style={styles.innerContainer}>
+                    <Text style={styles.appName}>ExpEase</Text>
+                    <View style={styles.headerContainer}>
+                        <Text style={styles.greetingText}>Hi Folks 👋</Text>
                         <Image
-                            source={{ uri: images[index].uri }}
-                            style={styles.carouselImage}
+                            source={require("@/assets/images/studenticon.png")}
+                            style={styles.profileImage}
                         />
                     </View>
-                )}
-            />
+                </View>
 
+                <Carousel
+                    loop
+                    width={width}
+                    height={200}
+                    autoPlay
+                    data={images}
+                    scrollAnimationDuration={3000}
+                    renderItem={({ index }) => (
+                        <View style={styles.carouselContainer}>
+                            <Image
+                                source={{ uri: images[index].uri }}
+                                style={styles.carouselImage}
+                            />
+                        </View>
+                    )}
+                />
 
-            <Text style={styles.sectionTitle}>Companies We Have Experiences With</Text>
-            <FlatList
-                data={companies}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.companyList}
-                renderItem={({ item }) => (
-                    <View style={styles.companyCard}>
-                        <Image source={{ uri: item.logo }} style={styles.companyLogo} />
-                        <Text style={styles.companyName}>{item.name}</Text>
-                    </View>
-                )}
-            />
-            {/* <View>
-                <TextInput>
+                <Text style={styles.sectionTitle}>
+                    Companies We Have Experiences With
+                </Text>
+                <FlatList
+                    data={companies}
+                    keyExtractor={(item) => item.id}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.companyList}
+                    initialNumToRender={20}
+                    maxToRenderPerBatch={20}
+                    renderItem={({ item }) => (
+                        <Pressable
+                            onPress={() => handleCompanySelect(item.name)}
+                            style={{ backgroundColor: "rgba(255,0,0,0.1)", paddingVertical: 8 }}
+                        >
+                            <View style={styles.companyCard}>
+                                <Image
+                                    source={{ uri: item.logo }}
+                                    style={styles.companyLogo}
+                                />
+                                <Text style={styles.companyName}>{item.name}</Text>
+                            </View>
+                        </Pressable>
+                    )}
+                />
 
-                </TextInput>
-            </View> */}
+                <View style={{ marginTop: 2 }}>
+                    <Text style={styles.sectionTitle}>
+                        Explore and Share Your Experience
+                    </Text>
+                </View>
+                <ListOfExperiences />
+            </ScrollView>
+
+            <Pressable
+                style={styles.floatingButton}
+                onPress={() => router.push("/formpage")}
+            >
+                <Image
+                    source={require("@/assets/images/react-logo.png")}
+                    style={styles.floatingButtonImage}
+                />
+            </Pressable>
         </SafeAreaView>
     );
 }
@@ -88,7 +131,7 @@ function createStyles(theme, colorScheme) {
             margin: 10,
         },
         appName: {
-            color: theme.text,
+            color: "#8986f7",
             textAlign: "center",
             fontSize: 24,
             fontWeight: "bold",
@@ -112,14 +155,15 @@ function createStyles(theme, colorScheme) {
             borderColor: theme.icon,
         },
         carouselContainer: {
-            flex: 1,
             marginHorizontal: 10,
+            height: 200,
+            borderRadius: 10,
+            overflow: "hidden",
         },
         carouselImage: {
             width: "100%",
             height: "100%",
             resizeMode: "cover",
-            borderRadius: 5,
         },
         sectionTitle: {
             marginTop: 20,
@@ -129,24 +173,42 @@ function createStyles(theme, colorScheme) {
             textAlign: "center",
         },
         companyList: {
-            paddingHorizontal: 10,
-            marginTop: 15,
+            marginTop: 5,
         },
         companyCard: {
-            marginRight: 15,
+            marginRight: 10,
             alignItems: "center",
+            width: 60,
         },
         companyLogo: {
-            width: 50,
-            height: 50,
+            width: 40,
+            height: 40,
             resizeMode: "contain",
-            borderRadius: 100
+            borderRadius: 20,
         },
         companyName: {
             marginTop: 5,
-            fontSize: 14,
+            fontSize: 12,
             color: theme.text,
             textAlign: "center",
+            fontWeight: "400",
+        },
+        floatingButton: {
+            position: "absolute",
+            bottom: 20,
+            right: 20,
+            backgroundColor: "#8986f7",
+            borderRadius: 30,
+            width: 60,
+            height: 60,
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        floatingButtonImage: {
+            width: 30,
+            height: 30,
+            resizeMode: "contain",
+            tintColor: "#fff",
         },
     });
 }
