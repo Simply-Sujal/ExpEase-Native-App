@@ -1,14 +1,21 @@
-import React, { useContext, useEffect } from "react";
-import { View, Text, StyleSheet, FlatList, useColorScheme, Image, Pressable } from "react-native";
+import React, { useContext, useEffect, useState } from "react";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, useColorScheme } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { interviewexp } from "@/data/interviewexp";
 import { ThemeContext } from "@/context/ThemeContext";
 
+const API_ENDPOINT = "https://exp-ease-backend.vercel.app/api/v1/experience/company";
+
 const FilteredExperiences = () => {
-    const { companyName } = useLocalSearchParams();
+    const { companyName } = useLocalSearchParams(); // Get companyName from params
     const { theme, setColorScheme, colorScheme } = useContext(ThemeContext);
     const systemColorScheme = useColorScheme();
     const router = useRouter();
+
+    const [experiences, setExperiences] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    const styles = createStyles(theme, colorScheme);
 
     useEffect(() => {
         if (systemColorScheme !== colorScheme) {
@@ -16,49 +23,71 @@ const FilteredExperiences = () => {
         }
     }, [systemColorScheme]);
 
-    const filteredData = interviewexp.filter(
-        (exp) => exp.companyName.toLowerCase() === companyName.toLowerCase()
-    );
+    useEffect(() => {
+        // Fetch experiences based on companyName
+        const fetchExperiences = async () => {
+            try {
+                const response = await fetch(`${API_ENDPOINT}/${companyName}`);
+                const data = await response.json();
+                if (data && data.experiences) {
+                    setExperiences(data.experiences);
+                } else {
+                    setError("No experiences found.");
+                }
+            } catch (err) {
+                setError("Failed to fetch experiences. Please try again later.");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    const styles = createStyles(theme, colorScheme);
+        fetchExperiences();
+    }, [companyName]);
 
     const handlePress = (id) => {
         router.push(`/detailexperience/${id}`);
     };
 
-
     const renderExperienceCard = ({ item }) => (
-        <View style={styles.cardContainer} key={item.id}>
-            <Image source={{ uri: item.image }} style={styles.image} />
+        <View style={styles.cardContainer} key={item._id}>
+            {/* Display a fallback image if image is empty */}
+            <Image
+                source={{ uri: item.image || 'https://via.placeholder.com/130x120' }}
+                style={styles.image}
+            />
             <View style={styles.cardContent}>
                 <Text style={styles.companyName}>{item.companyName}</Text>
-                <Text style={styles.studentName}>{item.nameOfTheStudent}</Text>
+                <Text style={styles.studentName}>{item.userName}</Text>
                 <Text style={styles.topic}>Hiring Year: {item.yearOfHiring}</Text>
-                <Pressable onPress={() => handlePress(item.id)}>
+                <Pressable onPress={() => handlePress(item._id)}>
                     <Text style={styles.btn}>Read</Text>
                 </Pressable>
             </View>
         </View>
     );
 
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.title}>Loading experiences for {companyName}...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Experiences with {companyName}</Text>
-            {filteredData.length > 0 ? (
+            {error ? (
+                <Text style={styles.noDataText}>{error}</Text>
+            ) : (
                 <FlatList
-                    data={filteredData}
+                    data={experiences}
                     renderItem={renderExperienceCard}
-                    keyExtractor={(item) => item.id.toString()}
-                    contentContainerStyle={styles.listContainer}
+                    keyExtractor={(item) => item._id} // Use _id as the key
                     ListEmptyComponent={
-                        <Text style={styles.noResultsText}>No matching results found.</Text>
+                        <Text style={styles.noResultsText}>No experiences available for {companyName}.</Text>
                     }
                 />
-            ) : (
-                <Text style={styles.noDataText}>
-                    No experiences available for {companyName}.
-                </Text>
             )}
         </View>
     );
@@ -79,24 +108,6 @@ function createStyles(theme, colorScheme) {
             marginBottom: 10,
             paddingTop: 15,
             color: theme.text,
-            textAlign: "center"
-        },
-        card: {
-            backgroundColor: "#f9f9f9",
-            padding: 10,
-            borderRadius: 8,
-            marginVertical: 8,
-            shadowColor: "#000",
-        },
-        cardTitle: {
-            fontSize: 16,
-            fontWeight: "500",
-            color: "#333",
-        },
-        noDataText: {
-            fontSize: 16,
-            color: "#888",
-            marginTop: 20,
             textAlign: "center",
         },
         cardContainer: {
@@ -139,25 +150,19 @@ function createStyles(theme, colorScheme) {
         },
         btn: {
             color: theme.text,
-            borderColor: "#222",
-            // borderWidth: 1,
             padding: 6,
             textAlign: "center",
             backgroundColor: "#8986f7",
             fontSize: 17,
-            fontWeight: 500,
+            fontWeight: "500",
             borderRadius: 5,
-            marginRight: 40
+            marginRight: 40,
         },
-        searchBar: {
-            backgroundColor: theme.background,
-            borderRadius: 8,
-            padding: 10,
+        noDataText: {
             fontSize: 16,
-            margin: 10,
-            color: theme.text,
-            borderWidth: 1,
-            borderColor: "#ccc",
+            color: "#888",
+            marginTop: 20,
+            textAlign: "center",
         },
         noResultsText: {
             textAlign: "center",
@@ -165,5 +170,5 @@ function createStyles(theme, colorScheme) {
             fontSize: 16,
             marginTop: 20,
         },
-    })
-};
+    });
+}

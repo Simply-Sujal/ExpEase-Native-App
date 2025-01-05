@@ -10,7 +10,6 @@ import {
     Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { interviewexp } from "@/data/interviewexp"; // Adjust your import path
 import { ThemeContext } from "@/context/ThemeContext";
 import { useRouter } from "expo-router";
 
@@ -20,7 +19,8 @@ const ListOfExperiences = () => {
     const router = useRouter();
 
     const [searchQuery, setSearchQuery] = useState("");
-    const [filteredData, setFilteredData] = useState(interviewexp);
+    const [experienceData, setExperienceData] = useState([]);
+    const [filteredData, setFilteredData] = useState([]);
 
     useEffect(() => {
         if (systemColorScheme !== colorScheme) {
@@ -29,16 +29,37 @@ const ListOfExperiences = () => {
     }, [systemColorScheme]);
 
     useEffect(() => {
+        // Fetch data from the API
+        const fetchExperienceData = async () => {
+            try {
+                const response = await fetch('https://exp-ease-backend.vercel.app/api/v1/experience/allexperiencedata');
+                const data = await response.json();
+                if (data.success) {
+                    console.log(data);  // Debugging: Log the response
+                    setExperienceData(data.experiences); // Assuming the API returns an object with an "experiences" array
+                    setFilteredData(data.experiences);
+                } else {
+                    console.error("Error: ", data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching experience data:', error);
+            }
+        };
+
+        fetchExperienceData();
+    }, []);
+
+    useEffect(() => {
         // Filter data based on search query
         const lowercasedQuery = searchQuery.toLowerCase();
-        const filtered = interviewexp.filter(
+        const filtered = experienceData.filter(
             (item) =>
                 item.companyName.toLowerCase().includes(lowercasedQuery) ||
                 item.collegeName.toLowerCase().includes(lowercasedQuery) ||
                 item.yearOfHiring.toString().includes(lowercasedQuery)
         );
         setFilteredData(filtered);
-    }, [searchQuery]);
+    }, [searchQuery, experienceData]);
 
     const styles = createStyles(theme, colorScheme);
 
@@ -47,13 +68,18 @@ const ListOfExperiences = () => {
     };
 
     const renderExperienceCard = ({ item }) => (
-        <View style={styles.cardContainer} key={item.id}>
-            <Image source={{ uri: item.image }} style={styles.image} />
+        <View style={styles.cardContainer} key={item._id}> {/* Use _id for uniqueness */}
+            <Image
+                source={{
+                    uri: item.image || 'https://img.freepik.com/free-vector/augmented-reality-urban-modeling-illustration_335657-372.jpg',
+                }}
+                style={styles.image}
+            />
             <View style={styles.cardContent}>
                 <Text style={styles.companyName}>{item.companyName}</Text>
-                <Text style={styles.studentName}>{item.nameOfTheStudent}</Text>
+                <Text style={styles.studentName}>{item.userName}</Text>
                 <Text style={styles.topic}>Hiring Year: {item.yearOfHiring}</Text>
-                <Pressable onPress={() => handlePress(item.id)}>
+                <Pressable onPress={() => handlePress(item._id)}>
                     <Text style={styles.btn}>Read</Text>
                 </Pressable>
             </View>
@@ -72,7 +98,7 @@ const ListOfExperiences = () => {
             <FlatList
                 data={filteredData}
                 renderItem={renderExperienceCard}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => item._id.toString()} // Use _id for key extraction
                 contentContainerStyle={styles.listContainer}
                 ListEmptyComponent={
                     <Text style={styles.noResultsText}>No matching results found.</Text>
@@ -96,7 +122,7 @@ function createStyles(theme, colorScheme) {
         },
         cardContainer: {
             flexDirection: "row",
-            backgroundColor: theme.cardBackground,
+            backgroundColor: theme.background,
             borderRadius: 10,
             borderWidth: 1,
             borderColor: "#111",
@@ -135,14 +161,13 @@ function createStyles(theme, colorScheme) {
         btn: {
             color: theme.text,
             borderColor: "#222",
-            // borderWidth: 1,
             padding: 6,
             textAlign: "center",
             backgroundColor: "#8986f7",
             fontSize: 17,
             fontWeight: 500,
             borderRadius: 5,
-            marginRight: 40
+            marginRight: 40,
         },
         searchBar: {
             backgroundColor: theme.background,

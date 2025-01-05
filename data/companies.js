@@ -11,7 +11,7 @@ export const companies = [
     },
     {
         id: "3",
-        name: "Capgemini",
+        name: "Afford",
         logo: "https://companieslogo.com/img/orig/CAP.PA-9b4110b0.png?t=1720244491"
     },
     {

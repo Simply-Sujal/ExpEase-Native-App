@@ -5,34 +5,69 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
+    View,
+    Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemeContext } from "@/context/ThemeContext";
 import { Picker } from "@react-native-picker/picker";
 
+const API_ENDPOINT = "https://exp-ease-backend.vercel.app/api/v1/experience/experienceform";
+
 const AddExperienceForm = () => {
     const { theme } = useContext(ThemeContext);
 
     const [formData, setFormData] = useState({
-        nameOfTheStudent: "",
+        userName: "",
         companyName: "",
         collegeName: "",
         onCampusOrOffCampus: "On-Campus",
         yearOfHiring: "",
         experienceDetails: "",
-        image: "",
+        image: "", // Optional field
         numberOfRounds: "",
         role: "",
         interviewMode: "Online",
+        offerStatus: "Offer", // New field with a default value
     });
 
     const handleInputChange = (field, value) => {
         setFormData({ ...formData, [field]: value });
     };
 
-    const handleSubmit = () => {
-        console.log("Submitted Data: ", formData);
-        // Add a function to send the data to your backend here
+    const handleSubmit = async () => {
+        try {
+            const response = await fetch(API_ENDPOINT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                Alert.alert("Success", "Experience submitted successfully!");
+                setFormData({
+                    userName: "",
+                    companyName: "",
+                    collegeName: "",
+                    onCampusOrOffCampus: "On-Campus",
+                    yearOfHiring: "",
+                    experienceDetails: "",
+                    image: "",
+                    numberOfRounds: "",
+                    role: "",
+                    interviewMode: "Online",
+                    offerStatus: "Offer", // Reset to default
+                });
+            } else {
+                Alert.alert("Error", "Failed to submit experience. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            Alert.alert("Error", "An error occurred. Please try again later.");
+        }
     };
 
     const styles = createStyles(theme);
@@ -40,97 +75,39 @@ const AddExperienceForm = () => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContainer}>
-                <Text style={styles.header}>Share Your Experience</Text>
+                <Text style={styles.header}>📖 Share Your Experience</Text>
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Name of the Student"
-                    placeholderTextColor="gray"
-                    value={formData.nameOfTheStudent}
-                    onChangeText={(text) => handleInputChange("nameOfTheStudent", text)}
-                />
+                {/** Form Fields */}
+                {formFields.map(({ placeholder, field, multiline, keyboardType, pickerItems }) => (
+                    <View key={field} style={styles.fieldContainer}>
+                        <Text style={styles.label}>
+                            {placeholder} <Text style={styles.asterisk}>*</Text>
+                        </Text>
+                        {pickerItems ? (
+                            <Picker
+                                selectedValue={formData[field]}
+                                style={styles.picker}
+                                onValueChange={(value) => handleInputChange(field, value)}
+                            >
+                                {pickerItems.map(({ label, value }) => (
+                                    <Picker.Item key={value} label={label} value={value} />
+                                ))}
+                            </Picker>
+                        ) : (
+                            <TextInput
+                                style={[styles.input, multiline && styles.textArea]}
+                                placeholder={`Enter ${placeholder}`}
+                                placeholderTextColor="gray"
+                                value={formData[field]}
+                                keyboardType={keyboardType || "default"}
+                                onChangeText={(text) => handleInputChange(field, text)}
+                                multiline={multiline || false}
+                            />
+                        )}
+                    </View>
+                ))}
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Company Name"
-                    placeholderTextColor="gray"
-                    value={formData.companyName}
-                    onChangeText={(text) => handleInputChange("companyName", text)}
-                />
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="College Name"
-                    placeholderTextColor="gray"
-                    value={formData.collegeName}
-                    onChangeText={(text) => handleInputChange("collegeName", text)}
-                />
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Year of Hiring (e.g., 2021)"
-                    placeholderTextColor="gray"
-                    value={formData.yearOfHiring}
-                    keyboardType="numeric"
-                    onChangeText={(text) => handleInputChange("yearOfHiring", text)}
-                />
-
-                <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Experience Details"
-                    placeholderTextColor="gray"
-                    value={formData.experienceDetails}
-                    onChangeText={(text) =>
-                        handleInputChange("experienceDetails", text)
-                    }
-                    multiline
-                />
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Image URL"
-                    placeholderTextColor="gray"
-                    value={formData.image}
-                    onChangeText={(text) => handleInputChange("image", text)}
-                />
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Number of Rounds"
-                    placeholderTextColor="gray"
-                    value={formData.numberOfRounds}
-                    keyboardType="numeric"
-                    onChangeText={(text) => handleInputChange("numberOfRounds", text)}
-                />
-
-                <TextInput
-                    style={styles.input}
-                    placeholder="Role (e.g., Cloud Engineer)"
-                    placeholderTextColor="gray"
-                    value={formData.role}
-                    onChangeText={(text) => handleInputChange("role", text)}
-                />
-
-                <Picker
-                    selectedValue={formData.onCampusOrOffCampus}
-                    style={styles.picker}
-                    onValueChange={(value) =>
-                        handleInputChange("onCampusOrOffCampus", value)
-                    }
-                >
-                    <Picker.Item label="On-Campus" value="On-Campus" />
-                    <Picker.Item label="Off-Campus" value="Off-Campus" />
-                </Picker>
-
-                <Picker
-                    selectedValue={formData.interviewMode}
-                    style={styles.picker}
-                    onValueChange={(value) => handleInputChange("interviewMode", value)}
-                >
-                    <Picker.Item label="Online" value="Online" />
-                    <Picker.Item label="Walk-In" value="Walk-In" />
-                </Picker>
-
+                {/** Submit Button */}
                 <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
                     <Text style={styles.submitButtonText}>Submit</Text>
                 </TouchableOpacity>
@@ -138,6 +115,41 @@ const AddExperienceForm = () => {
         </SafeAreaView>
     );
 };
+
+const formFields = [
+    { placeholder: "Name of the Student", field: "userName" },
+    { placeholder: "Company Name", field: "companyName" },
+    { placeholder: "College Name", field: "collegeName" },
+    { placeholder: "Year of Hiring (e.g., 2021)", field: "yearOfHiring", keyboardType: "numeric" },
+    { placeholder: "Experience Details", field: "experienceDetails", multiline: true },
+    { placeholder: "Add the Image URL (Optional)", field: "image" },
+    { placeholder: "Number of Rounds", field: "numberOfRounds", keyboardType: "numeric" },
+    { placeholder: "Role (e.g., Cloud Engineer)", field: "role" },
+    {
+        placeholder: "On Campus or Off Campus",
+        field: "onCampusOrOffCampus",
+        pickerItems: [
+            { label: "On-Campus", value: "On-Campus" },
+            { label: "Off-Campus", value: "Off-Campus" },
+        ],
+    },
+    {
+        placeholder: "Interview Mode",
+        field: "interviewMode",
+        pickerItems: [
+            { label: "Online", value: "Online" },
+            { label: "Walk-In", value: "Walk-In" },
+        ],
+    },
+    {
+        placeholder: "Offer Status",
+        field: "offerStatus",
+        pickerItems: [
+            { label: "Offer", value: "Offer" },
+            { label: "Rejected", value: "Rejected" },
+        ],
+    },
+];
 
 export default AddExperienceForm;
 
@@ -151,11 +163,23 @@ function createStyles(theme) {
             padding: 20,
         },
         header: {
-            fontSize: 24,
+            fontSize: 26,
             fontWeight: "bold",
             color: theme.text,
             textAlign: "center",
             marginBottom: 20,
+        },
+        fieldContainer: {
+            marginBottom: 20,
+        },
+        label: {
+            fontSize: 16,
+            fontWeight: "600",
+            color: theme.text,
+            marginBottom: 5,
+        },
+        asterisk: {
+            color: "#FF6B6B",
         },
         input: {
             backgroundColor: theme.cardBackground,
@@ -165,7 +189,6 @@ function createStyles(theme) {
             borderRadius: 8,
             padding: 10,
             fontSize: 16,
-            marginBottom: 15,
         },
         textArea: {
             height: 100,
@@ -177,14 +200,12 @@ function createStyles(theme) {
             borderWidth: 1,
             borderColor: "#ccc",
             borderRadius: 8,
-            marginBottom: 15,
         },
         submitButton: {
             backgroundColor: "#8986f7",
             padding: 15,
             borderRadius: 8,
             alignItems: "center",
-            marginTop: 10,
         },
         submitButtonText: {
             color: "white",

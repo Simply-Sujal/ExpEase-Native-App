@@ -12,16 +12,17 @@ import {
 import Carousel from "react-native-reanimated-carousel";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemeContext } from "@/context/ThemeContext";
-import { companies } from "@/data/companies";
+import { companies } from "@/data/companies"; // Assuming the companies data is already available
 import { images } from "@/data/carouselImages";
 import { ScrollView } from "react-native";
-import ListOfExperiences from "@/components/ListOfExperinces";
 import { useRouter } from "expo-router";
+import ListOfExperiences from "@/components/ListOfExperinces";
+
+const width = Dimensions.get("window").width;
 
 export default function Information() {
     const { theme, setColorScheme, colorScheme } = useContext(ThemeContext);
     const systemColorScheme = useColorScheme();
-    const width = Dimensions.get("window").width;
     const router = useRouter();
 
     useEffect(() => {
@@ -31,9 +32,10 @@ export default function Information() {
     }, [systemColorScheme]);
 
     const handleCompanySelect = (companyName) => {
+        // Navigate to the filtered experiences page and pass the company name
         router.push({
             pathname: "/filteredExperiences",
-            params: { companyName }, // Pass the company name as a parameter
+            params: { companyName },
         });
     };
 
