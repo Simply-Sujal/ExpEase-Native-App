@@ -62,10 +62,10 @@ export default function Information() {
                     autoPlay
                     data={images}
                     scrollAnimationDuration={3000}
-                    renderItem={({ index }) => (
+                    renderItem={({ item }) => (
                         <View style={styles.carouselContainer}>
                             <Image
-                                source={{ uri: images[index].uri }}
+                                source={item.uri} // Use source here
                                 style={styles.carouselImage}
                             />
                         </View>
@@ -86,11 +86,11 @@ export default function Information() {
                     renderItem={({ item }) => (
                         <Pressable
                             onPress={() => handleCompanySelect(item.name)}
-                            style={{ backgroundColor: "rgba(255,0,0,0.1)", paddingVertical: 8 }}
+                            style={{ paddingVertical: 8 }}
                         >
                             <View style={styles.companyCard}>
                                 <Image
-                                    source={{ uri: item.logo }}
+                                    source={item.logo}
                                     style={styles.companyLogo}
                                 />
                                 <Text style={styles.companyName}>{item.name}</Text>
@@ -99,7 +99,7 @@ export default function Information() {
                     )}
                 />
 
-                <View style={{ marginTop: 2 }}>
+                <View style={{}}>
                     <Text style={styles.sectionTitle}>
                         Explore and Share Your Experience
                     </Text>
@@ -112,7 +112,7 @@ export default function Information() {
                 onPress={() => router.push("/formpage")}
             >
                 <Image
-                    source={require("@/assets/images/react-logo.png")}
+                    source={require("@/assets/images/expease-sharexperince.png")}
                     style={styles.floatingButtonImage}
                 />
             </Pressable>
@@ -127,7 +127,7 @@ function createStyles(theme, colorScheme) {
             backgroundColor: theme.background,
         },
         innerContainer: {
-            paddingVertical: 10,
+            paddingVertical: 5,
             paddingHorizontal: 10,
             borderRadius: 10,
             margin: 10,
@@ -185,7 +185,7 @@ function createStyles(theme, colorScheme) {
         companyLogo: {
             width: 40,
             height: 40,
-            resizeMode: "contain",
+            resizeMode: "stretch",
             borderRadius: 20,
         },
         companyName: {
@@ -207,8 +207,8 @@ function createStyles(theme, colorScheme) {
             alignItems: "center",
         },
         floatingButtonImage: {
-            width: 30,
-            height: 30,
+            width: 35,
+            height: 35,
             resizeMode: "contain",
             tintColor: "#fff",
         },

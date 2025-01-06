@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, Image, Pressable, useColorScheme } from "react-native";
+import { View, Text, StyleSheet, FlatList, Image, Pressable, useColorScheme, ActivityIndicator, ScrollView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ThemeContext } from "@/context/ThemeContext";
 
@@ -52,13 +52,13 @@ const FilteredExperiences = () => {
         <View style={styles.cardContainer} key={item._id}>
             {/* Display a fallback image if image is empty */}
             <Image
-                source={{ uri: item.image || 'https://via.placeholder.com/130x120' }}
+                source={{ uri: item.image || 'https://img.freepik.com/free-vector/hand-drawn-friends-videoconferencing-scene_23-2148831007.jpg?t=st=1736155734~exp=1736159334~hmac=2c31e6780c84111ab725c8b598c55288052828b38fbf95b291a8118119bda7a2&w=1060' }}
                 style={styles.image}
             />
             <View style={styles.cardContent}>
                 <Text style={styles.companyName}>{item.companyName}</Text>
                 <Text style={styles.studentName}>{item.userName}</Text>
-                <Text style={styles.topic}>Hiring Year: {item.yearOfHiring}</Text>
+                <Text style={styles.topic}>Interview Year: {item.yearOfHiring}</Text>
                 <Pressable onPress={() => handlePress(item._id)}>
                     <Text style={styles.btn}>Read</Text>
                 </Pressable>
@@ -68,14 +68,15 @@ const FilteredExperiences = () => {
 
     if (loading) {
         return (
-            <View style={styles.container}>
-                <Text style={styles.title}>Loading experiences for {companyName}...</Text>
+            <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color={theme.text} />
+                <Text style={styles.loadingText}>Loading experiences for {companyName}...</Text>
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <Text style={styles.title}>Experiences with {companyName}</Text>
             {error ? (
                 <Text style={styles.noDataText}>{error}</Text>
@@ -89,7 +90,7 @@ const FilteredExperiences = () => {
                     }
                 />
             )}
-        </View>
+        </ScrollView>
     );
 };
 
@@ -112,7 +113,7 @@ function createStyles(theme, colorScheme) {
         },
         cardContainer: {
             flexDirection: "row",
-            backgroundColor: theme.cardBackground,
+            backgroundColor: theme.background,
             borderRadius: 10,
             borderWidth: 1,
             borderColor: "#111",
@@ -169,6 +170,18 @@ function createStyles(theme, colorScheme) {
             color: theme.text,
             fontSize: 16,
             marginTop: 20,
+        },
+        loaderContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.background
+        },
+        loadingText: {
+            color: theme.text,
+            fontSize: 18,
+            marginTop: 20,
+            textAlign: 'center',
         },
     });
 }

@@ -20,7 +20,7 @@ export default function Index() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Image
-          source={require("../assets/images/Backgimage.jpg")}
+          source={require("../assets/images/ExpEaseHomeImage.jpg")}
           style={styles.image}
         />
         <View style={styles.textContainer}>

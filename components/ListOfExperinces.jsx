@@ -8,6 +8,8 @@ import {
     TextInput,
     useColorScheme,
     Pressable,
+    ActivityIndicator,
+    Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemeContext } from "@/context/ThemeContext";
@@ -21,6 +23,7 @@ const ListOfExperiences = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [experienceData, setExperienceData] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
+    const [loading, setLoading] = useState(true); // Loader state
 
     useEffect(() => {
         if (systemColorScheme !== colorScheme) {
@@ -35,14 +38,15 @@ const ListOfExperiences = () => {
                 const response = await fetch('https://exp-ease-backend.vercel.app/api/v1/experience/allexperiencedata');
                 const data = await response.json();
                 if (data.success) {
-                    console.log(data);  // Debugging: Log the response
-                    setExperienceData(data.experiences); // Assuming the API returns an object with an "experiences" array
+                    setExperienceData(data.experiences);
                     setFilteredData(data.experiences);
                 } else {
-                    console.error("Error: ", data.message);
+                    Alert.alert("Something went wrong", data.message);
                 }
             } catch (error) {
                 console.error('Error fetching experience data:', error);
+            } finally {
+                setLoading(false); // Stop loading once the data is fetched or error occurs
             }
         };
 
@@ -68,7 +72,7 @@ const ListOfExperiences = () => {
     };
 
     const renderExperienceCard = ({ item }) => (
-        <View style={styles.cardContainer} key={item._id}> {/* Use _id for uniqueness */}
+        <View style={styles.cardContainer} key={item._id}>
             <Image
                 source={{
                     uri: item.image || 'https://img.freepik.com/free-vector/augmented-reality-urban-modeling-illustration_335657-372.jpg',
@@ -78,10 +82,19 @@ const ListOfExperiences = () => {
             <View style={styles.cardContent}>
                 <Text style={styles.companyName}>{item.companyName}</Text>
                 <Text style={styles.studentName}>{item.userName}</Text>
-                <Text style={styles.topic}>Hiring Year: {item.yearOfHiring}</Text>
-                <Pressable onPress={() => handlePress(item._id)}>
-                    <Text style={styles.btn}>Read</Text>
-                </Pressable>
+
+                {/* Hiring Year and Read Button */}
+                <View style={styles.cardFooter}>
+                    <Text style={styles.hiringYear}>
+                        Batch : {item.yearOfHiring}
+                    </Text>
+                    <Pressable
+                        style={styles.readButton}
+                        onPress={() => handlePress(item._id)}
+                    >
+                        <Text style={styles.readButtonText}>Read Info</Text>
+                    </Pressable>
+                </View>
             </View>
         </View>
     );
@@ -95,15 +108,23 @@ const ListOfExperiences = () => {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
             />
-            <FlatList
-                data={filteredData}
-                renderItem={renderExperienceCard}
-                keyExtractor={(item) => item._id.toString()} // Use _id for key extraction
-                contentContainerStyle={styles.listContainer}
-                ListEmptyComponent={
-                    <Text style={styles.noResultsText}>No matching results found.</Text>
-                }
-            />
+
+            {loading ? (  // Display loader while fetching data
+                <View style={styles.loaderContainer}>
+                    <ActivityIndicator size="large" color={theme.text} />
+                    <Text style={{ color: theme.text, textAlign: "center" }}>Hold on...</Text>
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredData}
+                    renderItem={renderExperienceCard}
+                    keyExtractor={(item) => item._id.toString()}
+                    contentContainerStyle={styles.listContainer}
+                    ListEmptyComponent={
+                        <Text style={styles.noResultsText}>No matching results found.</Text>
+                    }
+                />
+            )}
         </SafeAreaView>
     );
 };
@@ -116,25 +137,35 @@ function createStyles(theme, colorScheme) {
             flex: 1,
             backgroundColor: theme.background,
         },
+        loaderContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
         listContainer: {
-            paddingHorizontal: 10,
-            paddingVertical: 20,
+            paddingHorizontal: 8,
+            paddingVertical: 10,
         },
         cardContainer: {
             flexDirection: "row",
-            backgroundColor: theme.background,
+            backgroundColor: theme.background || "#fff",
             borderRadius: 10,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 6,
+            elevation: 2,
+            marginBottom: 15,
+            padding: 10,
             borderWidth: 1,
-            borderColor: "#111",
-            marginBottom: 20,
-            padding: 15,
+            borderColor: colorScheme === "dark" ? "#898" : "#555"
         },
         image: {
-            width: 130,
-            height: 120,
+            width: 80,
+            height: 80,
             borderRadius: 5,
             marginRight: 15,
-            resizeMode: "cover",
+            resizeMode: "center",
         },
         cardContent: {
             flex: 1,
@@ -146,28 +177,32 @@ function createStyles(theme, colorScheme) {
             color: theme.text,
             marginBottom: 5,
         },
-        topic: {
-            fontSize: 14,
-            fontWeight: "500",
-            color: "#888",
-            marginBottom: 5,
-        },
         studentName: {
             fontSize: 16,
             fontWeight: "500",
             color: theme.text,
-            marginBottom: 5,
+            marginBottom: 10,
         },
-        btn: {
+        cardFooter: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+        },
+        hiringYear: {
+            fontSize: 14,
+            fontWeight: "500",
             color: theme.text,
-            borderColor: "#222",
-            padding: 6,
-            textAlign: "center",
+        },
+        readButton: {
             backgroundColor: "#8986f7",
-            fontSize: 17,
-            fontWeight: 500,
-            borderRadius: 5,
-            marginRight: 40,
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            borderRadius: 6,
+        },
+        readButtonText: {
+            color: "#fff",
+            fontWeight: "600",
+            fontSize: 14,
         },
         searchBar: {
             backgroundColor: theme.background,
